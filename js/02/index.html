@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小球发布订阅</title>
+  <style>
+      * {
+        padding: 0;
+        margin: 0;
+      }
+      html, body {
+          height: 100%;
+          overflow: hidden;
+      }
+      #box{
+          position: absolute;
+          top: 100px;
+          left: 100px;
+          width: 150px;
+          height: 150px;
+          border-radius: 50%;
+          background: lightcoral;
+          cursor: move;
+          z-index: 0;
+      }
+  </style>
+</head>
+<body>
+  <div id="box"></div>
+  <script src="./index.js"></script>
+  <script>
+    new Drag(document.querySelector('#box'));
+    // drag(document.querySelector('#box'))
+  </script>
+</body>
+</html>

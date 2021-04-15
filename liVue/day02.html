@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>简单模版渲染封装</title>
+</head>
+<body>
+  <div id="app">
+    <div class="container">
+      <p class="line">
+        <span>{{name}}-{{sex}}</span>
+      </p>
+    </div>
+
+    {{name}}
+    {{message[0].a[0].b}}
+  </div>
+  <script>
+    console.log(app)
+    class liVue {
+      constructor(options){
+          this._data = options.data;
+          this.$el = document.querySelector(options.el);
+          this.$parent = this.$el.parentNode;
+          this._vnode = this.$el.cloneNode(true)
+          this.init();
+          this.render();
+      }
+      init() {
+        this.spliceStr(this._vnode, this._data)
+      }
+      render() {
+        this.$parent.replaceChild(this._vnode, this.$el)
+      }
+      // 获取到dom元素中的{{}}值
+      spliceStr(template, data) {
+        const children = template.childNodes;
+        Array.from(children).forEach(element => {
+            if (element.nodeType === 3) {
+              const value = element.nodeValue;
+              const txt = value.replace(/\{\{(.+?)\}\}/g, (a, b) => {
+                const key = b.trim();
+                return this.translation(key, this._data);
+              })
+              element.nodeValue = txt;
+            } else if(element.nodeType === 1) {
+              this.spliceStr(element, data)
+            }
+        });
+      }
+      // 可以找到data中的value值
+      translation(path, data) {
+        path = path.split('.');
+        let i = 0;
+        console.log(path);
+        while( i < path.length) {
+          if (/(.+)?\[(.+)\]/.test(path[i])) {
+            path[i].replace(/(.+)?\[(.+)\]/,function(a, b, c){
+              //console.log(a,b,c)
+              data = b ? data[b][c] : data[c];
+              i++;
+            })
+          } else {
+            data = data[path[i]];
+            i++;
+          }
+        }
+        return data;
+      }
+      getVNode(node) {
+        let nodeType = node.nodeType;
+        let _vnode = null;
+        // 元素节点
+        if (nodeType === 1) {
+          let tag = node.nodeName;
+          let attributes = node.attributes;
+          let attrLen = attributes.length;
+          let _data = {};
+          for (let i = 0; i < attrLen; i++) {
+            _data[attributes[i].nodeName] = attributes[i].nodeValue;
+          }
+          _vnode = new VNode(tag, _data, undefined, nodeType)
+          let children = node.childNodes;
+          Array.from(children).forEach(item => {
+            _vnode.append(getVNode(item))
+          })
+        }
+        // 文本节点
+        if (nodeType === 3) {
+          _vnode = new VNode(undefined, undefined, node.nodeValue, nodeType)
+        }
+        return _vnode
+      }
+    }
+    class VNode {
+      // 虚拟dom
+      constructor(tag, data, value, type) {
+          this.tag = tag && tag.toLowerCase();
+          this.data = data;
+          this.value = value;
+          this.type = type;
+          this.children = [];
+      }
+      append(vnode) {
+        this.children.push(vnode)
+      }
+    }
+    new liVue({
+      el: "#app",
+      data: {
+        name: '测试',
+        sex: '男',
+        message: [
+          {
+            a: [{
+              b: 'hello world'
+            }]
+          }
+        ]
+      }
+    })
+    console.log(app)
+  </script>
+</body>
+</html>

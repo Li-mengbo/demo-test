@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>简单模版渲染封装</title>
+</head>
+<body>
+  <div id="app">
+    <div class="container">
+      <p class="line">
+        <span>{{name}}-{{sex}}</span>
+      </p>
+    </div>
+    {{name}}
+    {{message[0].a[0].b}}
+  </div>
+  <script>
+    console.log(app)
+    /**生成虚拟dom*/
+    function getVNode(node) {
+        let nodeType = node.nodeType;
+        let _vnode = null;
+        // 元素节点
+        if (nodeType === 1) {
+          let tag = node.nodeName;
+          let attributes = node.attributes;
+          let attrLen = attributes.length;
+          let _data = {};
+          for (let i = 0; i < attrLen; i++) {
+            _data[attributes[i].nodeName] = attributes[i].nodeValue;
+          }
+          _vnode = new VNode(tag, _data, undefined, nodeType)
+          let children = node.childNodes;
+          Array.from(children).forEach(item => {
+            _vnode.append(getVNode(item))
+          })
+        }
+        // 文本节点
+        if (nodeType === 3) {
+          _vnode = new VNode(undefined, undefined, node.nodeValue, nodeType)
+        }
+        return _vnode
+    }
+     /** 将虚拟 DOM 转换成真正的 DOM */
+     function parseVNode( vnode ) {
+      // 创建 真实的 DOM
+      let type = vnode.type;
+      let _node = null;
+      if ( type === 3 ) {
+        return document.createTextNode( vnode.value ); // 创建文本节点
+      } else if ( type === 1 ) {
+
+        _node = document.createElement( vnode.tag );
+
+        // 属性
+        let data = vnode.data; // 现在这个 data 是键值对
+        Object.keys(data).forEach( (key) => {
+          let attrName = key;
+          let attrValue = data[ key ];
+          _node.setAttribute( attrName, attrValue );
+        } );
+        // 子元素
+        let children = vnode.children;
+        children.forEach( subvnode => {
+          _node.appendChild( parseVNode( subvnode ) ); // 递归转换子元素 ( 虚拟 DOM )
+        } );
+
+        return _node;
+      }
+
+    }
+    // 获取到dom元素中的{{}}值
+    function spliceStr(template, data) {
+      const children = template.childNodes;
+      Array.from(children).forEach(element => {
+          if (element.nodeType === 3) {
+            const value = element.nodeValue;
+            const txt = value.replace(/\{\{(.+?)\}\}/g, (a, b) => {
+              const key = b.trim();
+              return translation(key, data);
+            })
+            // 替换模板值
+            element.nodeValue = txt;
+          } else if(element.nodeType === 1) {
+            this.spliceStr(element, data)
+          }
+      });
+    }
+    // 可以找到data中的value值
+    function translation(path, data) {
+        path = path.split('.');
+        let i = 0;
+        while( i < path.length) {
+          if (/(.+)?\[(.+)\]/.test(path[i])) {
+            path[i].replace(/(.+)?\[(.+)\]/,function(a, b, c){
+              //console.log(a,b,c)
+              data = b ? data[b][c] : data[c];
+              i++;
+            })
+          } else {
+            data = data[path[i]];
+            i++;
+          }
+        }
+        return data;
+    }
+    function combine(ast, obj) {
+        let {type, data, tag, value} = ast
+        let children = ast.children;
+        let _vnode = null;
+        if(ast.type === 3) {
+          const astValue = ast.value
+          value = astValue.replace(/\{\{(.+?)\}\}/g, (a, b) => {
+            const key = b.trim();
+            return translation(key, obj);
+          })
+          _vnode = new VNode(tag, data, value, type);
+        } else if(ast.type === 1){
+          _vnode = new VNode(tag, data, value, type);
+          children.forEach(item => _vnode.append(combine(item, obj)))
+        }
+        return _vnode;
+    }
+    class liVue {
+      constructor(options){
+          this._data = options.data;
+          this.$el = document.querySelector(options.el);
+          this.$parent = this.$el.parentNode;
+          this.mount();
+      }
+      mount() {
+        this.render = this.createRender();;
+        this.mountComputed()
+      }
+      mountComputed() {
+        let mount = () => {
+          // this.render()
+          this.updated(this.render());
+        }
+        mount();
+      }
+      createRender() {
+        // 克隆div元素生成ast
+        let ast = getVNode(this.$el.cloneNode(true), this._data);
+        console.log(11,ast)
+        return function render () {
+          // 将 带有 坑的 VNode 转换为 有数据的 VNode
+          let _tmp = combine( ast, this._data );
+          console.log(22,_tmp)
+          return _tmp;
+        }
+      }
+      updated(vnode) {
+        const newDom = parseVNode(vnode);
+        this.$parent.replaceChild(newDom, this.$el)
+      }
+    }
+    class VNode {
+      // 虚拟dom
+      constructor(tag, data, value, type) {
+          this.tag = tag && tag.toLowerCase();
+          this.data = data;
+          this.value = value;
+          this.type = type;
+          this.children = [];
+      }
+      append(vnode) {
+        this.children.push(vnode)
+      }
+    }
+    new liVue({
+      el: "#app",
+      data: {
+        name: '测试',
+        sex: '男',
+        message: [
+          {
+            a: [{
+              b: 'hello world'
+            }]
+          }
+        ]
+      }
+    })
+    console.log(app)
+  </script>
+</body>
+</html>

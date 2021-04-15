@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>简单模版渲染</title>
+</head>
+<body>
+  <div id="app">
+    <div>
+      <p>
+        <span>{{name}}-{{sex}}</span>
+      </p>
+    </div>
+
+    {{name}}
+  </div>
+  <script>
+    // 获取到根元素
+    const root = document.querySelector('#app');
+    const data = {
+      name: '测试',
+      sex: '男'
+    }
+    // 替换元素里的字符串
+    function spliceStr(template, data) {
+      const children = template.childNodes;
+      Array.from(children).forEach(element => {
+          console.log(element.nodeType)
+          if (element.nodeType === 3) {
+            const value = element.nodeValue;
+            const txt = value.replace(/\{\{(.+?)\}\}/g, function(a, b) {
+              console.log(b)
+              const key = b.trim();
+              return data[key];
+            })
+            element.nodeValue = txt;
+          } else if(element.nodeType === 1) {
+            spliceStr(element, data)
+          }
+      });
+    }
+    const newRoot = root.cloneNode(true)
+    spliceStr(newRoot, data)
+    root.parentNode.replaceChild(newRoot, root)
+    console.log(newRoot, root)
+  </script>
+</body>
+</html>
