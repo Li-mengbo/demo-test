@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>响应式</title>
+</head>
+<body>
+  <script>
+    let obj = {
+      a: 1,
+      b: {
+        name: 'Li'
+      },
+      c: [0, 1, {
+        name: 'bo'
+      }]
+    }
+    function responsive(obj, key, value, enumerable) {
+      if(Object.prototype.toString.call(value) === '[object Object]') {
+          reactivity(value)
+      }
+      Object.defineProperty(obj, key, {
+        configurable: true,
+        enumerable, // 是否可枚举
+        get() {
+          console.log('获取', key)
+          return value;
+        },
+        set(newVal) {
+          console.log('修改', key)
+          value = newVal;
+        }
+      })
+    }
+    // responsive(obj, 'a', obj.a, true);
+    function reactivity(obj) {
+      let objKey = Object.keys(obj);
+      objKey.forEach(item => {
+        let value = obj[item];
+        if (Object.prototype.toString.call(value) === '[object Array]') {
+          value.forEach(items => {
+            reactivity(items)
+          })
+        } else {
+          responsive(obj, item, obj[item],true)
+        }
+      });
+    }
+    reactivity(obj)
+  </script>
+</body>
+</html>

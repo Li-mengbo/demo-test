@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>切面编程</title>
+</head>
+<body>
+  <script>
+    function fn() {
+      console.log(111)
+      return 111
+    }
+    const fn1 = fn;
+    fn = function() {
+      fn1();
+      console.log(222)
+      return 222
+    }
+    fn();
+    // 在不改变test函数的情况下计算test执行时间
+    /**调用affter或者before返回对象function去执行*/
+    function test() {
+      console.log(444)
+    }
+    Function.__proto__.before = function(fn){
+      var _self = this;
+      return function() {
+        // fn.apply(this, arguments)
+        if (fn.apply(this, arguments) === false) return false;
+        return _self.apply(_self, arguments);
+      }
+    }
+    Function.__proto__.affter = function(fn){
+      var _self = this;
+      return function() {
+        var result =  _self.apply(_self, arguments);
+        if (result === false) return false;
+        fn.apply(_self, arguments)
+        return result
+      }
+    }
+    test.affter(function() {
+      console.log(333)
+    }).before(function(){
+      console.log(555)
+    })();
+  </script>
+</body>
+</html>
