@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>发布订阅</title>
+</head>
+<body>
+  <script>
+    /**发布订阅*/
+    class Event {
+      constructor() {
+        this.eventObjs = {};
+      }
+      on(type, handler) {
+        (this.eventObjs[type] || (this.eventObjs[type] = [])).push(handler);
+      }
+      off(type, handler) {
+          if(arguments.length === 0) {
+            this.eventObjs = {};
+          } else if(arguments.length === 1) {
+            this.eventObjs[type] && (this.eventObjs[type] = [])
+          } else {
+            // 使用循环移除所有的 该函数 对应的 type 事件
+            let _events = this.eventObjs[ type ];
+            if (!_events) return;
+            // 倒着循环 数组的 序号不会受到影响
+            for (let i = _events.length - 1; i >= 0; i--) {
+              if (_events[ i ] === handler) {
+                _events.splice( i, 1 );
+              }
+            }
+          }
+      }
+      emit(type) {
+        const arg = [...arguments].slice(1);
+        if(this.eventObjs[type] && this.eventObjs[type].length > 0) {
+          this.eventObjs[type].forEach((hand, i) => {
+            // 如果没有执行事件直接删除有的话执行
+            if (hand) {
+              hand.apply(null, arg);
+            } else {
+              this.eventObjs[type].splice(i, 1);
+            }
+          });
+        }
+      }
+    }
+    const events = new Event();
+    events.on('click', () => {
+      console.log(1)
+    })
+    events.on('click', () => {
+      console.log(2)
+    })
+    events.on('click', () => {
+      console.log(3)
+    })
+    events.emit('click');
+  </script>
+</body>
+</html>

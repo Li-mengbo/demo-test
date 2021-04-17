@@ -17,6 +17,17 @@
         name: 'bo'
       }]
     }
+    // 修改数组方法
+    const arrFn = ['push', 'pop', 'unshift', 'shift', 'reverse', 'sort', 'splice']
+    const arr = [];
+    const array_methods = Object.create(Array.prototype);
+    arrFn.forEach(item => {
+      array_methods[item] = function () {
+        console.log('调用', item)
+        return  Array.prototype[item].apply( this, arguments )
+      }
+    })
+    arr.__proto__ = array_methods;
     function responsive(obj, key, value, enumerable) {
       if(Object.prototype.toString.call(value) === '[object Object]') {
           reactivity(value)
@@ -40,12 +51,14 @@
       objKey.forEach(item => {
         let value = obj[item];
         if (Object.prototype.toString.call(value) === '[object Array]') {
+          value.__proto__ = array_methods;
           value.forEach(items => {
             reactivity(items)
           })
         } else {
           responsive(obj, item, obj[item],true)
         }
+        // responsive(obj, item, obj[item],true)
       });
     }
     reactivity(obj)
