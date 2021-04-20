@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>改写响应式reactivity方法为observe和watcher方法</title>
+</head>
+<body>
+  <div id="app">
+    <div class="container">
+      <p class="line">
+        <span>{{name}}-{{sex}}</span>
+      </p>
+    </div>
+    {{message[0].a[0].b}}
+    {{datas[0]}}
+  </div>
+  <script>
+    console.log(app)
+    /**改写数组方法触发响应式*/
+    const arrFn = ['push', 'pop', 'unshift', 'shift', 'reverse', 'sort', 'splice']
+    const array_methods = Object.create(Array.prototype);
+    arrFn.forEach(item => {
+      array_methods[item] = function () {
+        console.log('调用', item)
+        for( let i = 0; i < arguments.length; i++ ) {
+          observe( arguments[ i ] );
+        } 
+        return  Array.prototype[item].apply( this, arguments )
+      }
+    })
+    /**添加响应式*/
+    function defineReactive(obj, key, value, enumerable) {
+      if(typeof value === "object"  && value != null ) {
+        observe(value)
+      }
+      let dep = new Dep();
+      dep.__$name = key;
+      Object.defineProperty(obj, key, {
+        configurable: true,
+        enumerable, // 是否可枚举
+        get() {
+          console.log('获取', key)
+          dep.depend();
+          return value;
+        },
+        set(newVal) {
+          console.log('修改', key)
+          if ( value === newVal ) return;
+          // 直接修改值为对象
+          if (Object.prototype.toString.call(newVal) === '[object Object]') {
+            observe(newVal);
+          }
+          value = newVal
+          // _self.mountComputed();
+          dep.notify();//派发更新
+        }
+      })
+    }
+    /**响应式绑定*/
+    function observe(obj) {
+      if (Object.prototype.toString.call(obj) === '[object Array]') {
+        obj.__proto__ = array_methods;
+        obj.forEach(items => {
+          observe(items)
+        })
+      } else {
+        let objKey = Object.keys(obj);
+        objKey.forEach(item => {
+          defineReactive(obj, item, obj[item], true)
+        });
+      }
+    }
+    /**生成虚拟dom*/
+    function getVNode(node) {
+        let nodeType = node.nodeType;
+        let _vnode = null;
+        // 元素节点
+        if (nodeType === 1) {
+          let tag = node.nodeName;
+          let attributes = node.attributes;
+          let attrLen = attributes.length;
+          let _data = {};
+          for (let i = 0; i < attrLen; i++) {
+            _data[attributes[i].nodeName] = attributes[i].nodeValue;
+          }
+          _vnode = new VNode(tag, _data, undefined, nodeType)
+          let children = node.childNodes;
+          Array.from(children).forEach(item => {
+            _vnode.append(getVNode(item))
+          })
+        }
+        // 文本节点
+        if (nodeType === 3) {
+          _vnode = new VNode(undefined, undefined, node.nodeValue, nodeType)
+        }
+        return _vnode
+    }
+     /** 将虚拟 DOM 转换成真正的 DOM */
+     function parseVNode( vnode ) {
+      // 创建 真实的 DOM
+      let type = vnode.type;
+      let _node = null;
+      if ( type === 3 ) {
+        return document.createTextNode( vnode.value ); // 创建文本节点
+      } else if ( type === 1 ) {
+
+        _node = document.createElement( vnode.tag );
+
+        // 属性
+        let data = vnode.data; // 现在这个 data 是键值对
+        Object.keys(data).forEach( (key) => {
+          let attrName = key;
+          let attrValue = data[ key ];
+          _node.setAttribute( attrName, attrValue );
+        } );
+        // 子元素
+        let children = vnode.children;
+        children.forEach( subvnode => {
+          _node.appendChild( parseVNode( subvnode ) ); // 递归转换子元素 ( 虚拟 DOM )
+        } );
+
+        return _node;
+      }
+
+    }
+    // 获取到dom元素中的{{}}值
+    function spliceStr(template, data) {
+      const children = template.childNodes;
+      Array.from(children).forEach(element => {
+          if (element.nodeType === 3) {
+            const value = element.nodeValue;
+            const txt = value.replace(/\{\{(.+?)\}\}/g, (a, b) => {
+              const key = b.trim();
+              return translation(key, data);
+            })
+            // 替换模板值
+            element.nodeValue = txt;
+          } else if(element.nodeType === 1) {
+            this.spliceStr(element, data)
+          }
+      });
+    }
+    // 可以找到data中的value值
+    function translation(path, data) {
+        path = path.split('.');
+        let i = 0;
+        while( i < path.length) {
+          if (/(.+)?\[(.+)\]/.test(path[i])) {
+            path[i].replace(/(.+)?\[(.+)\]/,function(a, b, c){
+              //console.log(a,b,c)
+              data = b ? data[b]?.[c] : data[c];
+              i++;
+            })
+          } else {
+            data = data[path[i]];
+            i++;
+          }
+        }
+        return data;
+    }
+    // 新的vnode
+    function combine(ast, obj) {
+        let {type, data, tag, value} = ast
+        let children = ast.children;
+        let _vnode = null;
+        if(ast.type === 3) {
+          const astValue = ast.value
+          value = astValue.replace(/\{\{(.+?)\}\}/g, (a, b) => {
+            const key = b.trim();
+            return translation(key, obj);
+          })
+          _vnode = new VNode(tag, data, value, type);
+        } else if(ast.type === 1){
+          _vnode = new VNode(tag, data, value, type);
+          children.forEach(item => _vnode.append(combine(item, obj)))
+        }
+        return _vnode;
+    }
+    class LiVue {
+      constructor(options){
+          this._data = options.data;
+          this.$el = options.el;
+          this.$parent = document.querySelector(this.$el).parentNode;
+          this.initData(this._data);
+          this.mount();
+      }
+      mount() {
+        this.render = this.createRender();;
+        this.mountComputed()
+      }
+      mountComputed() {
+        let mount = () => {
+          // this.render()
+          this.updated(this.render());
+        }
+        // mount();
+        new Watcher(this, mount);
+        //  Dep.target = new Watcher( this, mount )
+      }
+      createRender() {
+        // 克隆div元素生成ast
+        let ast = getVNode(document.querySelector(this.$el).cloneNode(true), this._data);
+        return function render () {
+          // 将 带有 坑的 VNode 转换为 有数据的 VNode
+          let _tmp = combine( ast, this._data );
+          return _tmp;
+        }
+      }
+      updated(vnode) {
+        const newDom = parseVNode(vnode);
+        this.$parent.replaceChild(newDom, document.querySelector(this.$el))
+      }
+      initData(data) {
+        const keys = Object.keys(data);
+        observe(this._data);
+        keys.forEach(item => {
+          this.proxy(this, '_data', item)
+        })
+      }
+      proxy(target, prop, key ) {
+          Object.defineProperty(target, key, {
+            configurable: true,
+            enumerable: true,
+            get() {
+              return target[prop][key];
+            },
+            set(newVal) {
+              target[prop][key] = newVal
+            }
+          })
+      }
+    }
+    let weatcherId = 0;
+    /**
+     * vm vue实例
+     * exOrfn 执行的函数 也可以是属性的路径
+    */
+    class Watcher {
+      constructor(vm, expOrfn) {
+        this.vm = vm;
+        this.getter = expOrfn;
+        this.deps = [] //依赖项
+        this.depId = {} //依赖项id保证唯一性
+        this.id = weatcherId++;
+        this.get();
+      }
+      get() {
+        pushTarget(this);
+        this.getter.call(this.vm, this.vm);
+        popTarget();
+      }
+      run() { // 执行
+        this.get();
+      }
+      update() { // 触发更新
+        this.run()
+      }
+      cleanupDep() { // 清空队列
+        this.deps = []
+      }
+      addDep(dep) {
+        this.deps.push(dep)
+      }
+    }
+    /**
+     * 依赖收集和派发更新
+    */
+    let depId = 0
+    class Dep {
+      constructor () {
+        this.subs = [];
+        this.id = depId++;
+      }
+      addSub(sub) { //添加watcher
+        this.subs.push( sub );
+      }
+      removeSub(sub) { //移除watcher
+        for (let i = this.subs.length - 1; i >= 0 ; i--) {
+          if (sub === this.subs[ i ]) {
+            this.subs.splice( i, 1 );
+          }
+        }
+      }
+      depend() { //与watcher关联依赖收集
+    // 就是将 当前的 dep 与当前的 watcher 互相关联
+        if ( Dep.target ) {
+          this.addSub( Dep.target ); // 将 当前的 watcher 关联到 当前的 dep 上
+          Dep.target.addDep( this ); // 将当前的 dep 与 当前渲染 watcher 关联起来
+        }
+      }
+      notify() { //触发与之关联的 watcher 的 update 方法, 起到更新的作用
+        // if ( Dep.target ) {
+        //   Dep.target.update();
+        // }
+        const dep = this.subs.slice();
+        dep.forEach(watch => {
+          watch.update();
+        })
+      }
+    }
+    // 属性与watcher关联
+    const targetStack = [];
+    function pushTarget(target) {
+      targetStack.unshift(Dep.target)
+      Dep.target = target;
+    }
+    function popTarget() {
+      targetStack.shift()
+    }
+    Dep.target = null;
+    class VNode {
+      // 虚拟dom
+      constructor(tag, data, value, type) {
+          this.tag = tag && tag.toLowerCase();
+          this.data = data;
+          this.value = value;
+          this.type = type;
+          this.children = [];
+      }
+      append(vnode) {
+        this.children.push(vnode)
+      }
+    }
+    const liVue = new LiVue({
+      el: "#app",
+      data: {
+        name: '测试',
+        sex: '男',
+        message: [
+          {
+            a: [{
+              b: 'hello world'
+            }]
+          }
+        ],
+        datas: [1, 2, 3]
+      }
+    })
+    console.log(app)
+  </script>
+</body>
+</html>
