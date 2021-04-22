@@ -29,4 +29,11 @@ Function.prototype.myApply = function(self, arg) {
   self[fn](...arg);
   delete self[fn];
 }
+// es5 apply
+Function.prototype.myApply = function(self) {
+  self = self || window;
+  self.fn = this;
+  eval('self.fn('+arguments[1]+')')
+  delete self.fn;
+}
 
