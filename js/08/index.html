@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>性能优化</title>
+  <style>
+    .ball {
+      width: 50px;
+      height: 50px;
+      border: 1px solid red;
+      border-radius: 50%;
+    }
+    .animate {
+      animation: move 3s ease-in-out;
+    }
+    .animate1 {
+      position: absolute;
+      animation: move1 3s ease-in-out;
+    }
+    .animate2 {
+      animation: move2 3s ease-in-out;
+    }
+    @keyframes move {
+      0% {
+        margin-left: 0;
+      }
+      25% {
+        margin-left: 100px;
+      }
+      50% {
+        margin-left: 150px;
+        margin-top: 100px;
+      }
+      75% {
+        margin-left: 100px;
+        margin-top: 0;
+      }
+      100% {
+        margin-left: 0;
+        margin-top: 0;
+      }
+    }
+    @keyframes move1 {
+      0% {
+        left: 0;
+      }
+      25% {
+        left: 100px;
+      }
+      50% {
+        left: 150px;
+        top: 100px;
+      }
+      75% {
+        left: 100px;
+        top: 0;
+      }
+      100% {
+        left: 0;
+        top: 0;
+      }
+    }
+    @keyframes move2 {
+      0% {
+        transform: translateX(0);
+      }
+      25% {
+        transform: translateX(100px);
+      }
+      50% {
+        transform: translate(150px, 100px);
+      }
+      75% {
+        transform: translate(100px, 0);
+      }
+      100% {
+        transform: translate(0, 0);
+      }
+    }
+    #a {
+      font-size: 12px;
+    }
+    div p {
+      font-size: 13px;
+    }
+    div .c {
+      font-size: 14px;
+    }
+    .a .b .c{
+      font-size: 15px;
+    }
+    #b {
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div id="a" class="a">
+    <div id="b" class="b">
+      <p id="c" class="c">111</p>
+    </div>
+  </div>
+  <script>
+    // document.querySelector('.ball').classList.add('animate');
+    // document.querySelector('.ball').classList.add('animate1');
+    // document.querySelector('.ball').classList.add('animate2');
+  </script>
+</body>
+</html>

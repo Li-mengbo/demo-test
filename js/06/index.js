@@ -3,7 +3,7 @@
  */
 // 实现call和apply
 // es6 call
-Function.prototype.myCall = function(self, ...arg) {
+Function.prototype.myCallEs6 = function(self, ...arg) {
   self = self || window;
   const fn = Symbol('临时值')
   self[fn] = this;
@@ -11,7 +11,7 @@ Function.prototype.myCall = function(self, ...arg) {
   delete fn;
 }
 // es5 call
-Function.prototype.myCall = function(self) {
+Function.prototype.myCallEs5 = function(self) {
   self = self || window;
   self.fn = this;
   var args = [];
@@ -22,7 +22,7 @@ Function.prototype.myCall = function(self) {
   delete self.fn;
 }
 // es6 applay
-Function.prototype.myApply = function(self, arg) {
+Function.prototype.myApplyEs6 = function(self, arg) {
   self = self || window;
   const fn = Symbol('临时值')
   self[fn] = this;
@@ -30,10 +30,93 @@ Function.prototype.myApply = function(self, arg) {
   delete self[fn];
 }
 // es5 apply
-Function.prototype.myApply = function(self) {
+Function.prototype.myApplyEs5 = function(self) {
   self = self || window;
   self.fn = this;
   eval('self.fn('+arguments[1]+')')
   delete self.fn;
 }
 
+// 丐版bind es6
+Function.prototype.myBindEs6 = function(self, ...args){
+  // 不是箭头函数会有新的this所以把当前this赋值为that
+  const that = this;
+  const bindFn = function(...rest) {
+    return that.call(self, ...args, ...rest)
+  }
+  bindFn.prototype = Object.create(that.prototype)
+  return bindFn;
+}
+// 丐版bind es5
+Function.prototype.myBindEs5 = function(self){
+  var args = [].slice.call(arguments, 1)
+  // 不是箭头函数会有新的this所以把当前this赋值为that
+  var that = this;
+  const bindFn = function() {
+    var rest = [].slice.call(arguments);
+    return that.apply(self, args.concat(rest))
+  }
+  bindFn.prototype = Object.create(that.prototype)
+  return bindFn;
+}
+var obj = {name: 1};
+function fn(a,b) {
+  console.log(this);
+  console.log(a, b)
+}
+var fn1 = fn.myBindEs5(obj);
+var fn2 = fn.myBindEs6(obj);
+/**真实的bind支持new操作符调用需要改写 例如：*/
+/**
+function Point(x, y) {
+  this.x = x;
+  this.y = y;
+}
+Point.prototype.toString = function() {
+  return this.x + ',' + this.y;
+}
+var p = new Point(1, 2);
+p.toString(); // '1,2'
+var emptyObj = {};
+var p1 = Point.bind(emptyObj, 0);
+p1(12)
+console.log(emptyObj); // {x: 0, y: 12}
+p1.toString() //返回对象上的toString
+// 实际应该是
+var newP1 = new p1(12);
+newP1.toString(); //0, 12
+*/
+// 标配版bind es5
+Function.prototype.myBindsEs5 = function(self){
+  var args = [].slice.call(arguments, 1)
+  // 不是箭头函数会有新的this所以把当前this赋值为that
+  var that = this;
+  const bindFn = function() {
+    var rest = [].slice.call(arguments);
+    // 判断是否通过new运行
+    const isNew = this instanceof bindFn;
+    // resultFn.prototype 是否存在于this的原型链上
+    // const isNew = resultFn.prototype.isPrototypeOf(this)
+    self = isNew ? this : self;
+    return that.apply(self, args.concat(rest))
+  }
+  bindFn.prototype = Object.create(that.prototype)
+  return bindFn;
+}
+// 标配版bind es6
+Function.prototype.myBindsEs6 = function(self, ...args){
+  // 不是箭头函数会有新的this所以把当前this赋值为that
+  const that = this;
+  const bindFn = function(...rest) {
+    // 判断是否通过new运行
+    const isNew = this instanceof bindFn;
+    // resultFn.prototype 是否存在于this的原型链上
+    // const isNew = resultFn.prototype.isPrototypeOf(this)
+    self = isNew ? this : self;
+    return that.call(self, ...args, ...rest)
+  }
+  bindFn.prototype = Object.create(that.prototype)
+  return bindFn;
+}
+// 实现create
+// 实现new
