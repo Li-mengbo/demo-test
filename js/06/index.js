@@ -8,7 +8,9 @@ Function.prototype.myCallEs6 = function(self, ...arg) {
   const fn = Symbol('临时值')
   self[fn] = this;
   self[fn](...arg);
+  var rest = self[fn](...arg);
   delete fn;
+  return rest;
 }
 // es5 call
 Function.prototype.myCallEs5 = function(self) {
@@ -18,23 +20,26 @@ Function.prototype.myCallEs5 = function(self) {
   for(var i = 1,len = arguments.length; i < len; i++){
       args.push('arguments['+i+']');
   }
-  eval('self.fn('+args+')')
+  var rest = eval('self.fn('+args+')');
   delete self.fn;
+  return rest;
 }
 // es6 applay
 Function.prototype.myApplyEs6 = function(self, arg) {
   self = self || window;
   const fn = Symbol('临时值')
   self[fn] = this;
-  self[fn](...arg);
+  const rest = self[fn](...arg);
   delete self[fn];
+  return rest;
 }
 // es5 apply
 Function.prototype.myApplyEs5 = function(self) {
   self = self || window;
   self.fn = this;
-  eval('self.fn('+arguments[1]+')')
+  var rest = eval('self.fn('+arguments[1]+')')
   delete self.fn;
+  return rest;
 }
 
 // 丐版bind es6
@@ -59,13 +64,6 @@ Function.prototype.myBindEs5 = function(self){
   bindFn.prototype = Object.create(that.prototype)
   return bindFn;
 }
-var obj = {name: 1};
-function fn(a,b) {
-  console.log(this);
-  console.log(a, b)
-}
-var fn1 = fn.myBindEs5(obj);
-var fn2 = fn.myBindEs6(obj);
 /**真实的bind支持new操作符调用需要改写 例如：*/
 /**
 function Point(x, y) {
