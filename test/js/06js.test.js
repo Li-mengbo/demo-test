@@ -1,4 +1,4 @@
-var test = require('./test.js');
+var test = require('../../js/06/test');
 // BDD: expect
 var expect = require('chai').expect;
 // TDD: assert 不常用

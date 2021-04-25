@@ -5,37 +5,6 @@
  * - 数据类型不限于示例，尽可能考虑边界
  * - function 引用相等即可
  */
- const foo1 = {
-  a: 1,
-  b: "1",
-  c: NaN,
-  d: [
-    {
-      a: 1,
-      b: 2,
-    },
-  ],
-  f: {
-    a: 1,
-  },
-  g: null
-};
-
-const foo2 = {
-  a: 1,
-  b: "1",
-  c: NaN,
-  d: [
-    {
-      a: 1,
-      b: 2,
-    },
-  ],
-  f: {
-    a: 1,
-  },
-  g: null
-};
 function isArr(arr) {
   return Object.prototype.toString.call(arr) === '[object Array]'
 }
@@ -68,12 +37,9 @@ function isEqual(target1, target2) {
   }
   return true;
 }
-// console.log('-------',isEqual(foo1, foo2))
 /**
  * 2. 实现 getValue 函数来获取path对应的值
  */
- var object = { a: [{ b: { c: 3 } }] }; // path: 'a[0].b.c'
- var array = [{ a: { b: [1] } }]; // path: '[0].a.b[0]'
  function getValue(target, valuePath, defaultValue) {
   const arr = valuePath.split('.')
   let i = 0;
@@ -93,9 +59,6 @@ function isEqual(target1, target2) {
   }
   return obj || defaultValue;
  }
- console.log(getValue(object, "a[0].b.c", 0)); // 输出3
- console.log(getValue(array, "[0].a.b[0]", 12)); // 输出 1
- console.log(getValue(array, "[0].a.b[0].c", 12)); // 输出 12
  /**
  * 问题 3
  * 将一天24小时按每半小划分成48段，我们用一个位图表示选中的时间区间，例如`110000000000000000000000000000000000000000000000`，
@@ -114,4 +77,26 @@ function timeBitmapToRanges(str) {}
 // console.log(
 //   timeBitmapToRanges("110011000000110000000000000000000000000000001111")
 // );
+/**
+ * 问题四、push方法
+ * plus(0).toString() === 0
+ * plus(1)(2).toString() === 3
+ * plus(1,1)(2,2)(3).toString() === 9
+ */
+function plus(n) {
+  const args = [].slice.call(arguments);
+  const answer = function () {
+    args.push(...arguments)
+    return answer
+  }
+  answer.toString = function() {
+    return args.reduce((a,b) => a+b)
+  }
+  return answer;
+}
+module.exports = {
+  isEqual,
+  getValue,
+  plus
+}
 
