@@ -1,8 +1,8 @@
-import { initMinxin } from "./init.js";
+// 初始化Api在这里进行简化直接调用initMixin在core/instance/index文件中
+// 源码调用了initGlobalAPI
+import { initMixin } from "./initMixin.js";
 function Vue(options) {
-  if(!(this instanceof Vue)) {
-    console.warn('需要new实例化')
-  }
   this._init(options)
 }
-initMinxin(Vue);
+initMixin(Vue);
+export default Vue;

@@ -1,7 +1,7 @@
 import {
   observe,
   defineReactive
-} from './observer.js'
+} from './observe';
 const sharedPropertyDefinition = {
   enumerable: true,
   configurable: true,
@@ -26,21 +26,22 @@ export function initState(vm) {
     // 暂不实现
   }
   // 如果有计算属性computed则初始化计算属性
-  if (options.computed) {
+  if (opts.computed) {
     // 暂不实现
   }
   // 如果有watch添加watch监听
-  if (options.watch) {
+  if (opts.watch) {
     // 暂不实现
   }
 }
 // 等价于demo07里的proxy方法
 export function proxy (target, sourceKey, key) {
   sharedPropertyDefinition.get = function() {
-    return target[sourceKey][key]
+    console.log()
+    return this[sourceKey][key]
   }
   sharedPropertyDefinition.set = function(val) {
-    target[sourceKey][key] = val;
+    this[sourceKey][key] = val;
   }
   Object.defineProperty(target, key, sharedPropertyDefinition)
 }
@@ -48,14 +49,15 @@ function initData(vm) {
   let data = vm.$options.data;
   // 判断是不是对象的形式暂不处理只考虑是对象
   // data = vm._data = typeOf data === 'function'
-  data = data || {};
+  data = vm._data =  data || {};
   const keys = Object.keys(data);
-  const i = keys.length;
+  let i = keys.length;
   while(i--) {
     const key = keys[i];
     // 真实Vue处理了data中的key值与props和methods是否相等，相等的话给出警告,暂不考虑
     // 把data的值分别绑定到vue实例上并且通过_data可以访问也可以通过vue.XX访问
     proxy(vm, `_data`, key)
   }
+  // 第二个值是bool值暂不实现说明一下可以用来
   observe(data);
 }

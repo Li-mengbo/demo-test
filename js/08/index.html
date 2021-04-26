@@ -79,33 +79,59 @@
         transform: translate(0, 0);
       }
     }
-    #a {
-      font-size: 12px;
-    }
-    div p {
-      font-size: 13px;
-    }
-    div .c {
-      font-size: 14px;
-    }
-    .a .b .c{
-      font-size: 15px;
-    }
-    #b {
-      font-size: 16px;
-    }
   </style>
 </head>
 <body>
-  <div id="a" class="a">
-    <div id="b" class="b">
-      <p id="c" class="c">111</p>
-    </div>
+  <div class="ball">
   </div>
   <script>
+    /*
+     * js移动效果最好使用动画，
+     * 如果不支持可以使用rAF这个渲染不要使用setInterval requestAnimationFrame
+     * 使用margin移动元素会触发回流和重绘在performance中可以看到触发了layout和paint使用会开启gpu加速直接计算不用触发layout和paint
+    */
     // document.querySelector('.ball').classList.add('animate');
     // document.querySelector('.ball').classList.add('animate1');
     // document.querySelector('.ball').classList.add('animate2');
+    var start = null
+      var element = document.querySelector('.ball')
+      element.style.position = "absolute"
+
+      // function step(timestamp) {
+      //   if (!start) start = timestamp
+      //   var progress = timestamp - start
+      //   element.style.left = Math.min(progress / 10, 200) + "px"
+      //   if (progress < 2000) {
+      //     window.requestAnimationFrame(step)
+      //   }
+      // }
+      function step(timestamp) {
+        if (!start) start = timestamp
+        var progress = timestamp - start
+        element.style.left = Math.min(progress / 10, 200) + "px"
+        let i = 1000
+        while (i > 0) {
+          console.log("i", i)
+          i--
+        }
+        if (progress < 2000) {
+          window.requestAnimationFrame(step)
+        }
+      }
+      // 动画
+      window.requestAnimationFrame(step)
+
+      // 空闲调度
+      // window.requestIdleCallback(() => {
+      //   alert("rIC")
+      // })
+      // 500毫秒之后调度
+      window.requestIdleCallback(
+        () => {
+          alert("rID")
+        },
+        { timeout: 500 }
+      )
   </script>
 </body>
 </html>
