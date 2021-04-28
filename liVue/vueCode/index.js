@@ -1,5 +1,6 @@
-import Vue from './src/vue';
+import Vue from './src/index';
 const app = new Vue({
+  el: 'a',
   data: {
     name: 1,
     arr: [1, 2, {
@@ -8,4 +9,5 @@ const app = new Vue({
   }
 })
 console.log(app)
-app.name = '222'
+app.name = '222';
+app.arr.push(3);

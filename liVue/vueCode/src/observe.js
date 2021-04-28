@@ -12,7 +12,7 @@ const methodsToPatch = [
 const arrayMethods = Object.create(Array.prototype)
 methodsToPatch.forEach(function (method) {
   // cache original method
-  const original = arrayProto[method];
+  const original = arrayMethods[method];
   arrayMethods[method] = function(...args) {
     // 切面编程详情可以查看js文件夹04文件
     const result = original.apply(this, args)
@@ -33,13 +33,25 @@ methodsToPatch.forEach(function (method) {
     return result;
   }
 })
+// 给对象上增加一个__ob__的属性值是Observer实例化的对象
+function def (obj, key, val, enumerable) {
+  Object.defineProperty(obj, key, {
+    value: val,
+    enumerable: !!enumerable,
+    writable: true,
+    configurable: true
+  })
+}
 
 export class Observer {
   constructor(value) {
     // 执行了Dep暂不处理
     this.value = value;
+    def(value, '__ob__', this);
     if(Array.isArray(value)) {
-      this.observerArray(value)
+      this.observeArray(value)
+      // 改写data上数组原型链上的方法Vue里进行了判断'__proto__' in {}判断是否有原型链在这里不进行处理
+      value.__proto__ = arrayMethods
     } else {
       this.walk(value);
     }
@@ -52,7 +64,7 @@ export class Observer {
       defineReactive(obj, key, value) // 真实valu支持传入两个值defineReactive做了处理
     }
   }
-  observerArray(obj) {
+  observeArray(obj) {
     obj.forEach(item => {
       observe(item)
     })
