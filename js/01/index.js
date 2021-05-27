@@ -24,7 +24,7 @@ function readFile(filename) {
         dependencies[node.source.value] = newFile
     }
   });
-  //通过@babel/core和@babel/preset-env进行代码的转换
+  //通过@babel/core和@babel/preset-env进行代码的转换es6转换为es5
   const {code} = babel.transformFromAst(ast, null, {
       presets: ["@babel/preset-env"]
   })
