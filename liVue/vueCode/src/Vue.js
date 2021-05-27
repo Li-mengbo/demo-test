@@ -6,4 +6,8 @@ function Vue(options) {
 }
 initMixin(Vue);
 // 还有一些方法的初始化暂不处理
+// _update()方法
+// lifecycleMixin(Vue)
+// render方法
+// renderMixin(Vue)
 export default Vue;
