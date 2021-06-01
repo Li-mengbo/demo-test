@@ -1,4 +1,5 @@
 import { isObject } from './utils'
+import Dep from './dep';
 // 重写数组方法
 const methodsToPatch = [
   'push',
@@ -16,6 +17,7 @@ methodsToPatch.forEach(function (method) {
   arrayMethods[method] = function(...args) {
     // 切面编程详情可以查看js文件夹04文件
     const result = original.apply(this, args)
+    // 数组响应式this.__ob__就是Observer
     const ob = this.__ob__
     let inserted
     switch (method) {
@@ -29,7 +31,7 @@ methodsToPatch.forEach(function (method) {
     }
     if (inserted) ob.observeArray(inserted)
     // dep监听暂不处理
-    // ob.dep.notify()
+    ob.dep.notify()
     return result;
   }
 })
@@ -46,6 +48,7 @@ function def (obj, key, val, enumerable) {
 export class Observer {
   constructor(value) {
     // 执行了Dep暂不处理
+    this.dep = new Dep()
     this.value = value;
     def(value, '__ob__', this);
     if(Array.isArray(value)) {
@@ -83,14 +86,24 @@ export function observe(value) {
   return ob;
 }
 export function defineReactive(obj, key, value) {
+  const dep = new Dep();
   if(typeof obj === "object"  && obj != null ) {
-    observe(value)
+    let childOb = observe(value)
   }
   // 数据劫持
   Object.defineProperty(obj, key, {
     enumerable: true,
     configurable: true,
     get: function() {
+      if (dep.target) {
+        dep.depend()
+      }
+      if (childOb) {
+        childOb.dep.depend()
+        if (Array.isArray(value)) {
+          dependArray(value)
+        }
+      }
       console.log('获取值', key)
       return value;
     },
@@ -103,6 +116,17 @@ export function defineReactive(obj, key, value) {
       }
       value = val;
       // 触发视图更新
+      dep.notify();
     }
   })
+}
+// 数组的依赖收集
+function dependArray (value) {
+  for (let e, i = 0, l = value.length; i < l; i++) {
+    e = value[i]
+    e && e.__ob__ && e.__ob__.dep.depend()
+    if (Array.isArray(e)) {
+      dependArray(e)
+    }
+  }
 }

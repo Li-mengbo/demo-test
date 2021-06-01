@@ -38,17 +38,3 @@ export function popTarget () {
   targetStack.pop()
   Dep.target = targetStack[targetStack.length - 1]
 }
-function sort(arr) {
-  if (arr.length <= 1) return arr
-  const left = [];
-  const right = [];
-  const num = arr[0];
-  for(var i = 1; i < arr.length; i++){
-    if(arr[i]<=num){
-      left.push(arr[i]);
-    } else {
-      right.push(arr[i]);
-    }
-  }
-  return [...sort(left), num, ...sort(right)]
-}

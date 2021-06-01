@@ -1,3 +1,4 @@
+/**异步队列主要是使用promise和setTimeout */
 import { pushTarget, popTarget } from './dep'
 let uid = 0;
 export default class Watcher {
@@ -10,6 +11,7 @@ export default class Watcher {
     this.value = this.get()
   }
   get() {
+    // 调用dep方法设置target
     pushTarget(this)
     const vm = this.vm
     let value = this.getter.call(vm, vm)

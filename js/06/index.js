@@ -118,3 +118,8 @@ Function.prototype.myBindsEs6 = function(self, ...args){
 }
 // 实现create
 // 实现new
+function newFn(fn, ...arg) {
+  const fn1 = Object.create(fn.prototype); // 继承fn.prototype被创建
+  const fn2 = fn.apply(fn1, arg); // 改变上下文的指向
+  return  typeof fn2 === "object" ? fn2 : fn1;
+}
