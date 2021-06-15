@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>重绘和重排</title>
+</head>
+<body>
+    <div style="display: flex; height: 30px;">
+        <div style="width: 100px;background-color: green;"></div>
+        <div id="test" style="width: 100px;background-color: red;"></div>
+    </div>
+    <script>
+        setTimeout(() => {
+            // 2. 接下来setTimeout触发
+            var ele = document.querySelector('#test')
+            // 3. 你立刻访问此时的渲染树，拿到ele宽度，结果是100px
+            console.log('ele原始宽度', ele.offsetWidth)
+            // 4. 你修改了一下红色块的宽 --- 此时浏览器内部优化了一下：暂时不需要重排，先把flex设置放到队列
+            ele.style.flex = '1'
+            // 5. 你要访问ele的宽，此时浏览器迫不得已要重排，于是他进行relayout（即把你之前那个设置flex操作实施----所谓的实施其实就是依然在主线程中去执行dom引擎c++的重排代码逻辑），得到最新渲染树。然后给你返回最新宽度。
+            //    此时，虽然涉及到了c++调用，但无论js还是c++，其实都在依然占用主执行线程。因此此时仅仅是dom结构理论的offsetWIdth更新了，但渲染线程也无法得到执行，因此你肉眼看到的红色块依然是100px
+            console.log('ele自适应的宽度11', ele.offsetWidth)
+            // 6. 下面我们写个死循环占主主线程一段时间，从而让我们更清楚看到页面上依然是100px的红色块
+            const start = Date.now()
+            while(Date.now() - start < 3000) {
+
+            }
+            // 7. 主线程空闲，此时渲染线程得到执行，于是浏览器肉眼可看到红色块变成自适应。
+        }, 0)
+        // 1. 当页面首次加载，还未执行setTimeout回调时，页面首次js进入空闲状态，于是浏览器渲染引擎则把100px的红绿色块渲染。你会首先看到2个100px的块。
+    </script>
+</body>
+</html>

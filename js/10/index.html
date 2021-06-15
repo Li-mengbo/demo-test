@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jquery</title>
+</head>
+<body>
+  <div class="container"></div>
+  <script src="https://unpkg.com/jquery@3.4.1/dist/jquery.js"></script>
+  <script>
+    // console.log(jQuery('.container'))
+    var mengbo = function() {
+      return new mengbo.fn.init();
+    }
+    mengbo.fn = mengbo.prototype = {
+      constructor: mengbo
+    }
+    var init = mengbo.fn.init = function() {
+    }
+    init.prototype = mengbo.fn
+    console.log(mengbo())
+  </script>
+</body>
+</html>

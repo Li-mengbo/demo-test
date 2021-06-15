@@ -59,6 +59,14 @@ function isEqual(target1, target2) {
   }
   return obj || defaultValue;
  }
+ const get = (from, str, defaultStr) => {
+  const string = str
+  .replace(/\[([^\[\]]*)\]/g, '.$1.')
+  .split('.')
+  .filter(t => t !== '')
+  .reduce((prev, cur) => prev && prev[cur], from);
+  return string || defaultStr
+}
  /**
  * 问题 3
  * 将一天24小时按每半小划分成48段，我们用一个位图表示选中的时间区间，例如`110000000000000000000000000000000000000000000000`，
@@ -94,9 +102,100 @@ function plus(n) {
   }
   return answer;
 }
+/**
+ * 1. 解析url中的queryString
+ *
+ * 输入：https://www.youzan.com?name=coder&age=20&callback=https%3A%2F%2Fyouzan.com%3Fname%3Dtest&list[]=a&list[]=b&json=%7B%22str%22%3A%22abc%22,%22num%22%3A123%7D
+ * 输出：
+ * {
+ *  name: "coder",
+ *  age: "20",
+ *  callback: "https://youzan.com?name=test",
+ *  list: ["a", "b"],
+ *  json: {
+ *      str: 'abc',
+ *      num: 123
+ *  }
+ * }
+ */
+ let url = 'https://www.youzan.com?name=coder&age=20&callback=https%3A%2F%2Fyouzan.com%3Fname%3Dtest&list[]=a&list[]=b&json=%7B%22str%22%3A%22abc%22,%22num%22%3A123%7D'
+ function queryString(url) {
+   const urlJson = {}
+   let locationUrl = url.split('?')[1].split('&')
+   locationUrl.forEach(item => {
+     let [key, value] = item.split('=')
+     if (key.includes('[]')) {
+       let keyName = key.split('[]')[0]
+       if(resMap[keyName]) {
+           resMap[keyName].push(value)
+       } else {
+           resMap[keyName] = [value]
+       }
+     } else {
+       let deCodeKey = decodeURIComponent(value)
+       urlJson[key] = isJson(deCodeKey) ? JSON.parse(deCodeKey) : deCodeKey
+     }
+   });
+   console.log(urlJson)
+ }
+ queryString(url)
+ function isJson(str) {
+   if (typeof str === 'string') {
+     try {
+       JSON.parse(str)
+       return true
+     }catch(e) {
+       return false
+     }
+   } else {
+     return false
+   }
+ }
+/**
+ * 3、实现 getValue 函数，安全的获取目标对象指定 path 的值
+ * @params {object | array} value 指定对象
+ * @params {string} path 路径描述
+ * @params {any} defaultValue 默认值
+ */
+ const get = (from, str, defaultStr) => {
+  const string = str
+  .replace(/\[([^\[\]]*)\]/g, '.$1.')
+  .split('.')
+  .filter(t => t !== '')
+  .reduce((prev, cur) => prev && prev[cur], from);
+  return string || defaultStr
+}
+/**
+ * 常规题：把123456789，变成金钱模式，即：12,345,678（思路有很多，比如reverse之后利用模除手动插入逗号...
+ */
+// 反转插入正则匹配替换/(\d)(?=(\d{3})+(?!\d))/g
+/*
+请实现抽奖函数rand，保证随机性
+输入为表示对象数组，对象有属性n表示人名，w表示权重
+随机返回一个中奖人名，中奖概率和w成正比
+*/
+let peoples = [
+  {n:'p1', w:100},
+  {n:'p2', w:200},
+  {n:'p3', w:1}
+];
+let rand = function (p) {
+  let length = p.reduce((a,b) => a + b.w, 0)
+  for(let i = 0; i < p.length; i++) {
+    const random = Math.floor(Math.random() * length);
+    console.log(random)
+    if (random < p[i].w) {
+        return p[i].n
+    } else {
+      length -= p[i].w
+    }
+  }
+};
+rand(peoples)
 module.exports = {
   isEqual,
   getValue,
   plus
 }
+
 
